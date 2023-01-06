@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "guest-network-manager": {
+      "commandName": "Project",
+      "commandLineArgs": "--guest_network status"
+    }
+  }
+}

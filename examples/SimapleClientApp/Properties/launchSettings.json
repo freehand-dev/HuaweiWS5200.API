@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SimapleClientApp": {
+      "commandName": "Project",
+      "commandLineArgs": "--uri http://172.16.200.1/ --user admin --password password"
+    }
+  }
+}

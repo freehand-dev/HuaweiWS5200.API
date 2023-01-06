@@ -1,0 +1,53 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32929.385
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{672EAC1A-B7EB-4D39-BF90-6F2163CE23A5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C254CE0E-507F-465A-AA09-8D17916110B2}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HuaweiWS5200.API.DTOs", "src\HuaweiWS5200.API.DTOs\HuaweiWS5200.API.DTOs.csproj", "{F710ADA1-6396-453B-A3A4-1BF82960C50C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "guest-network-manager", "examples\guest-network-manager\guest-network-manager.csproj", "{7B2E0213-AE3A-4DD5-95D9-FC655B54D63D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HuaweiWS5200.API", "src\HuaweiWS5200.API\HuaweiWS5200.API.csproj", "{056C7916-ACED-4040-8AB5-727198AA3E69}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimapleClientApp", "examples\SimapleClientApp\SimapleClientApp.csproj", "{57D1FAFA-F66D-404A-87D1-3CC8F9E0D145}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F710ADA1-6396-453B-A3A4-1BF82960C50C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F710ADA1-6396-453B-A3A4-1BF82960C50C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F710ADA1-6396-453B-A3A4-1BF82960C50C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F710ADA1-6396-453B-A3A4-1BF82960C50C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B2E0213-AE3A-4DD5-95D9-FC655B54D63D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B2E0213-AE3A-4DD5-95D9-FC655B54D63D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B2E0213-AE3A-4DD5-95D9-FC655B54D63D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B2E0213-AE3A-4DD5-95D9-FC655B54D63D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{056C7916-ACED-4040-8AB5-727198AA3E69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{056C7916-ACED-4040-8AB5-727198AA3E69}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{056C7916-ACED-4040-8AB5-727198AA3E69}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{056C7916-ACED-4040-8AB5-727198AA3E69}.Release|Any CPU.Build.0 = Release|Any CPU
+		{57D1FAFA-F66D-404A-87D1-3CC8F9E0D145}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{57D1FAFA-F66D-404A-87D1-3CC8F9E0D145}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{57D1FAFA-F66D-404A-87D1-3CC8F9E0D145}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{57D1FAFA-F66D-404A-87D1-3CC8F9E0D145}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{F710ADA1-6396-453B-A3A4-1BF82960C50C} = {C254CE0E-507F-465A-AA09-8D17916110B2}
+		{7B2E0213-AE3A-4DD5-95D9-FC655B54D63D} = {672EAC1A-B7EB-4D39-BF90-6F2163CE23A5}
+		{056C7916-ACED-4040-8AB5-727198AA3E69} = {C254CE0E-507F-465A-AA09-8D17916110B2}
+		{57D1FAFA-F66D-404A-87D1-3CC8F9E0D145} = {672EAC1A-B7EB-4D39-BF90-6F2163CE23A5}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FDD03BAD-9BE0-4678-97E5-0655FE649C14}
+	EndGlobalSection
+EndGlobal
