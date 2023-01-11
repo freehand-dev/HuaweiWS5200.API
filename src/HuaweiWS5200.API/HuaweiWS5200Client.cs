@@ -21,7 +21,9 @@ namespace HuaweiWS5200.API
         readonly string wan_detect = @"/api/ntwk/wandetect";
         readonly string login_page = @"/html/index.html#/login";
         readonly string user_login_nonce = @"/api/system/user_login_nonce";
-        readonly string user_login_proof = @"api/system/user_login_proof";
+        readonly string user_login_proof = @"/api/system/user_login_proof";
+        readonly string heartbeat = @"/api/system/heartbeat";
+        readonly string wandiagnose = @"/api/ntwk/wandiagnose";
 
         private readonly ILogger<HuaweiWS5200Client>? _logger;
         public HttpClient Client
@@ -230,9 +232,17 @@ namespace HuaweiWS5200.API
             return response ?? throw new Exception("GetDeviceInfoAsync");
         }
 
+        public async Task<bool> HeartBeatAsync()
+        {
+            var response = await this.Client.GetAsync(heartbeat);
+            return response.IsSuccessStatusCode;
+        }
+
+
         /// <summary>
         /// 
         /// </summary>
+        /// <auth>none</auth>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         public async Task<WanDetect> GetWanDetectAsync()
@@ -241,7 +251,18 @@ namespace HuaweiWS5200.API
             return response ?? throw new Exception("GetWanDetectAsync");
         }
 
-        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public async Task<WanDiagnose> GetWanDiagnoseAsync()
+        {
+            var response = await this.Client.GetFromJsonAsync<WanDiagnose>(wandiagnose);
+            return response ?? throw new Exception("GetWanDiagnoseAsync");
+        }
+
+       
         /// <summary>
         /// 
         /// </summary>
@@ -292,36 +313,14 @@ namespace HuaweiWS5200.API
             }
             #endregion
 
-            #region 'crypt auth'
-            string authMsg = $"{requestDataNonce.Data.FirstNonce},{userLoginNonce.ServerNonce},{userLoginNonce.ServerNonce}";
-            
-            _logger?.LogInformation($"authMsg: {authMsg}");
-
-            _logger?.LogInformation($"FirstNonce: {requestDataNonce.Data.FirstNonce}");
-            _logger?.LogInformation($"ServerNonce: {userLoginNonce.ServerNonce}");
-
-
-            byte[] saltPassword = PBKDF2(
-                    password,
-                    Convert.FromHexString(userLoginNonce.Salt ?? throw new Exception("Salt is null")),
-                    userLoginNonce.Iterations ?? throw new Exception("Iterations is null")
-                );
-
-            var clientKey = HMACSHA256(Encoding.UTF8.GetBytes("Client Key"), saltPassword);
-            var storeKey = SHA256.HashData(clientKey);
-            var clientSignature = HMACSHA256(Encoding.UTF8.GetBytes(authMsg), storeKey);
-
-            _logger?.LogInformation($"saltPassword: {Convert.ToHexString(saltPassword)}");
-            _logger?.LogInformation($"clientKey: {Convert.ToHexString(clientKey)}");
-            _logger?.LogInformation($"storeKey: {Convert.ToHexString(storeKey)}");
-
-            _logger?.LogInformation($"clientSignature: {Convert.ToHexString(clientSignature)}");
-
-            byte[] clientProof = new byte[32];
-            for (int i = 0; i < clientProof.Length; i++)
-            {
-                clientProof[i] = (byte)(clientKey[i] ^ clientSignature[i]);
-            }
+            #region 'crypt'
+            byte[] clientProof = GetClientProof(
+                password,
+                userLoginNonce.Salt ?? throw new Exception("Salt is null"),
+                userLoginNonce.Iterations ?? throw new Exception("Iterations is null"),
+                requestDataNonce.Data.FirstNonce,
+                userLoginNonce.ServerNonce ?? throw new Exception("ServerNonce is null")
+            );
 
             _logger?.LogInformation($"clientProof: {Convert.ToHexString(clientProof)}");
             #endregion
@@ -388,6 +387,35 @@ namespace HuaweiWS5200.API
 
             this._csrf_param_proof = null;
             this._csrf_token_proof = null;    
+        }
+
+       
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="password"></param>
+        /// <param name="salt"></param>
+        /// <param name="iterations"></param>
+        /// <param name="firstNonce"></param>
+        /// <param name="serverNonce"></param>
+        /// <returns></returns>
+        internal static byte[] GetClientProof(string password, string salt, int iterations, string firstNonce, string serverNonce)
+        {
+            string authMsg = $"{firstNonce},{serverNonce},{serverNonce}";
+
+            byte[] saltPassword = PBKDF2(password, Convert.FromHexString(salt), iterations);
+
+            var clientKey = HMACSHA256(Encoding.UTF8.GetBytes("Client Key"), saltPassword);
+            var storeKey = SHA256.HashData(clientKey);
+            var clientSignature = HMACSHA256(Encoding.UTF8.GetBytes(authMsg), storeKey);
+
+            byte[] clientProof = new byte[32];
+            for (int i = 0; i < clientProof.Length; i++)
+            {
+                clientProof[i] = (byte)(clientKey[i] ^ clientSignature[i]);
+            }
+
+            return clientProof;
         }
 
         /// <summary>

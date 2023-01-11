@@ -7,6 +7,7 @@ using HuaweiWS5200.API.DTOs.ntwk;
 using HuaweiWS5200.API.DTOs.system;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
+using System.Text.Json;
 
 var host = new HostBuilder()
     .ConfigureAppConfiguration((context, config) =>
@@ -61,6 +62,8 @@ try
         DeviceInfo deviceInfo = await client.GetDeviceInfoAsync();
         _logger.LogInformation(Convert.ToString(deviceInfo.UpTime ?? -1));
 
+
+        WanDiagnose wanDiagnose = await client.GetWanDiagnoseAsync();
         IEnumerable<HostInfo> hostInfo = await client.GetHostInfoAsync();
         foreach (var item in hostInfo)
         {
@@ -75,7 +78,7 @@ try
 }
 catch (Exception ex)
 {
-    _logger.LogError(ex, "Unable to load branches from GitHub.");
+    _logger.LogError(ex, "HuaweiWS5200Client error.");
 }
 
 
