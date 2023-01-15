@@ -25,9 +25,10 @@ var host = new HostBuilder()
         });
     })
     .ConfigureLogging((hostContext, logging) =>
-    {
+    {   
         logging.ClearProviders();
         logging.AddConsole();
+        logging.SetMinimumLevel(LogLevel.Debug);
         //logging.AddSimpleConsole(options => options.IncludeScopes = true);
         //Provided by Microsoft.Extensions.Logging.Console
         //logging.AddSimpleConsole(options => options.TimestampFormat = "[HH:mm:ss] ");
@@ -50,6 +51,27 @@ try
     await client.LoginAsync(username, password);
     try
     {
+
+        await client.EnableGuestNetworkAsync();
+        Console.WriteLine("!!!!!!!!!!!!!!!!!!!!");
+        await Task.Delay(5000);
+        await client.DisableGuestNetworkAsync();
+        Console.WriteLine("!!!!!!!!!!!!!!!!!!!!");
+        await Task.Delay(5000);
+        await client.EnableGuestNetworkAsync();
+        Console.WriteLine("!!!!!!!!!!!!!!!!!!!!");
+        await Task.Delay(5000);
+        await client.DisableGuestNetworkAsync();
+        Console.WriteLine("!!!!!!!!!!!!!!!!!!!!");
+        await Task.Delay(5000);
+        await client.EnableGuestNetworkAsync();
+        Console.WriteLine("!!!!!!!!!!!!!!!!!!!!");
+        await Task.Delay(5000);
+        await client.DisableGuestNetworkAsync();
+
+        throw new Exception("exit");
+
+
         IEnumerable<Wan> wan = await client.GetWanAsync();
         _logger.LogInformation(wan.FirstOrDefault()?.IPv4Addr);
 

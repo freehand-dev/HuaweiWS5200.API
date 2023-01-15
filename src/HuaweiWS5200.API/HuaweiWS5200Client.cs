@@ -113,27 +113,54 @@ namespace HuaweiWS5200.API
             //{"Enable":true,"ID":"InternetGatewayDevice.X_Config.Wifi.Radio.1.Ssid.2.","WifiSsid":"FreeWiFi_OnBlackout","ValidTime":3,"SecOpt":"none","WpaPreSharedKey":""}},
             //"csrf":{"csrf_param":"WoRQ5Ea9cNkvDpSBl5OcOz0xNMZ2rA6p","csrf_token":"HX726dgtKRoONvfwgcz0OPpZQM2CtO5q"}}
 
-            RequestData<GuestNetworkRequest> loginData = new RequestData<GuestNetworkRequest>(this._csrf_param_proof!, this._csrf_token_proof!, new GuestNetworkRequest()
+            RequestData<GuestNetworkRequest> requestData = new RequestData<GuestNetworkRequest>(this._csrf_param_proof!, this._csrf_token_proof!, new GuestNetworkRequest()
             {
                 Config2G = config2g,
                 Config5G = config5g
             });
 
-            var requestContent = new StringContent(JsonSerializer.Serialize<RequestData<GuestNetworkRequest>>(
-                    loginData,
+            return await PostAsync<GuestNetworkResponse>(guest_network, requestData);
+            
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="requestUri"></param>
+        /// <param name="content"></param>
+        /// <returns></returns>
+        internal async Task<T?> PostAsync<T>(string? requestUri, object content) where T : class
+        {
+            var requestContent = new StringContent(
+                JsonSerializer.Serialize(
+                    content,
                     new JsonSerializerOptions()
                     {
                         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
                     }
                 ), Encoding.UTF8, "application/json");
 
-            var response = await this.Client.PostAsync(guest_network, requestContent);
+            var response = await this.Client.PostAsync(requestUri, requestContent);
             response.EnsureSuccessStatusCode();
+
+            string responseStr = await response.Content.ReadAsStringAsync();
+            this._logger?.LogTrace($"POST {guest_network} response: {responseStr}");
+
+
             using var contentStream = await response.Content.ReadAsStreamAsync();
 
-            GuestNetworkResponse? result = await JsonSerializer.DeserializeAsync<GuestNetworkResponse>(contentStream);
+            T? result = await JsonSerializer.DeserializeAsync<T>(contentStream);
+            if (result != null)
+            {
+                Csrf? csrf = result as Csrf;
+                if (csrf != null)
+                {
+                    this._csrf_param_proof = csrf.CsrfParam;
+                    this._csrf_token_proof = csrf.CsrfToken;
+                }
+            }
             return result;
-            
         }
 
         /// <summary>
@@ -144,13 +171,16 @@ namespace HuaweiWS5200.API
         /// <exception cref="Exception"></exception>
         public async Task<bool> EnableGuestNetworkAsync(bool enable = true)
         {
+            this._logger?.LogDebug($"EnableGuestNetworkAsync, enable={enable}");
 
             IEnumerable<GuestNetwork> guestNetwork = await this.GetGuestNetworkAsync();
 
             bool isEnable = !guestNetwork.Any(c => c.EnableFrequency == false);
+            this._logger?.LogDebug($"Guest Network is {(isEnable ? "On" : "Off")}");
 
             if (isEnable == enable)
             {
+                this._logger?.LogDebug($"Skip, no action needed");
                 return enable;
             }
 
@@ -178,6 +208,11 @@ namespace HuaweiWS5200.API
             }
 
             GuestNetworkResponse? guestNetworkResponse = await this.ConfigGuestNetworkAsync(config2g, config5g);
+
+            if (guestNetworkResponse?.errcode != 0)
+            {
+                this._logger?.LogError($"ConfigGuestNetworkAsync error with code {guestNetworkResponse?.errcode}");
+            }
 
             return guestNetworkResponse?.errcode == 0;
         }
@@ -294,19 +329,7 @@ namespace HuaweiWS5200.API
             };
 
             #region 'UserLoginNonce'
-            var requestNonceContent = new StringContent(JsonSerializer.Serialize<RequestData<UserLoginNonceRequest>>(
-                    requestDataNonce,
-                    new JsonSerializerOptions()
-                    {
-                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-                    }
-                ), Encoding.UTF8, "application/json");
-
-            var responseNonce = await this.Client.PostAsync(user_login_nonce, requestNonceContent);
-            responseNonce.EnsureSuccessStatusCode();
-            using var contentNonceStream = await responseNonce.Content.ReadAsStreamAsync();
-            UserLoginNonce? userLoginNonce = await JsonSerializer.DeserializeAsync<UserLoginNonce>(contentNonceStream);
-
+            UserLoginNonce? userLoginNonce = await this.PostAsync<UserLoginNonce>(user_login_nonce, requestDataNonce);
             if (userLoginNonce?.Err != 0)
             {
                 throw new Exception("UserLoginNonce failed");
@@ -322,7 +345,7 @@ namespace HuaweiWS5200.API
                 userLoginNonce.ServerNonce ?? throw new Exception("ServerNonce is null")
             );
 
-            _logger?.LogInformation($"clientProof: {Convert.ToHexString(clientProof)}");
+            _logger?.LogDebug($"clientProof: {Convert.ToHexString(clientProof)}");
             #endregion
 
             //
@@ -335,28 +358,12 @@ namespace HuaweiWS5200.API
 
 
             #region 'UserLoginProof'
-            var requestProofContent = new StringContent(JsonSerializer.Serialize<RequestData<UserLoginProofRequest>>(
-                    requestDataProof,
-                    new JsonSerializerOptions()
-                    {
-                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-                    }
-                ), Encoding.UTF8, "application/json");
-
-            var responseProof = await this.Client.PostAsync(user_login_proof, requestProofContent);
-            responseNonce.EnsureSuccessStatusCode();
-;
-            using var contentProofStream = await responseProof.Content.ReadAsStreamAsync();
-            UserLoginProof? userLoginProof = await JsonSerializer.DeserializeAsync<UserLoginProof>(contentProofStream);
-
+            UserLoginProof? userLoginProof = await this.PostAsync<UserLoginProof>(user_login_proof, requestDataProof);
             if (userLoginProof?.Err != 0)
             {
                 throw new Exception("UserLoginProof failed");
             }
             #endregion
-
-            this._csrf_param_proof = userLoginProof?.CsrfParam;
-            this._csrf_token_proof = userLoginProof?.CsrfToken;
 
             return userLoginProof?.Err == 0;
         }
@@ -368,23 +375,8 @@ namespace HuaweiWS5200.API
         public async Task LogoutAsync()
         {
             string user_logout = @"/api/system/user_logout";
-
             RequestData<UserLogoutRequest> requestData = new RequestData<UserLogoutRequest>(this._csrf_param_proof!, this._csrf_token_proof!);
-
-            var requestContent = new StringContent(JsonSerializer.Serialize<RequestData<UserLogoutRequest>>(
-                    requestData,
-                    new JsonSerializerOptions()
-                    {
-                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-                    }
-                ), Encoding.UTF8, "application/json");
-
-            var response = await this.Client.PostAsync(user_logout, requestContent);
-            response.EnsureSuccessStatusCode();
-
-            using var contentStream = await response.Content.ReadAsStreamAsync();
-            UserLogout? userLogout = await JsonSerializer.DeserializeAsync<UserLogout>(contentStream);
-
+            UserLogout? userLogout = await this.PostAsync<UserLogout>(user_logout, requestData);
             this._csrf_param_proof = null;
             this._csrf_token_proof = null;    
         }
